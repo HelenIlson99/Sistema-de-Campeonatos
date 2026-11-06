@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sistema de Campeonatos</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>Sistema de Campeonatos</h1>
+  <p>Pontos corridos e mata-mata com ida e volta</p>
+</header>
+<main>
+  <section class="card">
+    <h2>Novo campeonato</h2>
+    <div id="area-login">
+      <p class="dica">Entre com login e senha para criar um campeonato.</p>
+      <form id="form-login" class="linha">
+        <input id="login-usuario" placeholder="Usuário" autocomplete="username">
+        <input id="login-senha" type="password" placeholder="Senha" autocomplete="current-password">
+        <button type="submit">Entrar</button>
+      </form>
+      <p id="login-erro" class="aviso" hidden>Usuário ou senha incorretos.</p>
+    </div>
+    <div id="area-criar" hidden>
+      <div class="linha">
+        <input id="nome" placeholder="Nome do campeonato">
+        <select id="formato">
+          <option value="liga">Pontos corridos</option>
+          <option value="mata">Eliminatório (ida e volta)</option>
+        </select>
+        <button id="criar">Criar campeonato</button>
+        <button id="btn-sair" class="sec">Sair</button>
+        <button id="btn-importar" class="sec">Importar dados antigos</button>
+<input id="arq-importar" type="file" accept=".json,application/json" hidden>
+      </div>
+    </div>
+  </section>
+  <section class="card">
+    <h2>Meus campeonatos</h2>
+    <ul id="lista" class="itens"></ul>
+  </section>
+  <section id="painel" class="card" hidden></section>
+  <section class="card">
+    <h2 class="rk-titulo">🏆 Sala de Conquistas</h2>
+    <div id="sala"></div>
+  </section>
+</main>
+<script type="module" src="script.js"></script>
+</body>
+</html>
