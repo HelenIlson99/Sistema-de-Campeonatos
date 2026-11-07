@@ -10,6 +10,7 @@ const KEY = "campeonatosV2"; // só leitura: dados antigos deste navegador, usad
 const db = { camps: [], conq: [] };
 let sel = null;
 let selEquipe = null;
+let mostrarFim = false; // mostra ou oculta campeonatos finalizados na lista
 let usuario = null;
 let erroNuvem = configurado ? "" : "Supabase ainda não configurado: cole a URL e a chave no início do script.js.";
 let gravadoC = {}, gravadoQ = {}; // último JSON enviado de cada item (envia só o que mudou)
@@ -18,7 +19,7 @@ const $ = id => document.getElementById(id);
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const sb = configurado ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 const podeEditar = () => !!usuario;
-
+ 
 // Cria elementos HTML de forma segura
 const h = (tag, props = {}, ...kids) => {
   const e = document.createElement(tag);
@@ -48,7 +49,9 @@ if (sb) sb.auth.onAuthStateChange((_evento, sessao) => { usuario = sessao ? sess
 // ---------- Nuvem (Supabase): uma linha por campeonato e uma por conquista ----------
 let fila = Promise.resolve();
 const save = () => {
-  render();
+  // O desenho da tela é adiado um instante: assim o Tab já moveu o foco para o próximo
+  // campo antes de a tela ser refeita, e o render() devolve o foco ao campo certo.
+  setTimeout(render, 0);
   if (podeEditar()) fila = fila.then(persistir).catch(err => {
     console.error(err);
     alert("Não foi possível salvar na nuvem: " + (err.message || err.code));
@@ -277,14 +280,28 @@ const tm = (c, n) => {
   return h("span", { className: "tm" }, e && e.logo && h("img", { src: e.logo, alt: "" }), n);
 };
  
-function render() { renderLista(); renderPainel(); renderSala(); }
+// Redesenha a tela e devolve o foco ao campo de resultado que estava ativo
+// (sem isso, o Tab se perde sempre que um placar é salvo).
+function render() {
+  const painel = $("painel"), a = document.activeElement;
+  const i = painel.contains(a) && a.tagName === "INPUT" ? [...painel.querySelectorAll("input")].indexOf(a) : -1;
+  renderLista(); renderPainel(); renderSala();
+  if (i >= 0) painel.querySelectorAll("input")[i]?.focus();
+}
  
 function renderLista() {
   const ul = $("lista");
   ul.replaceChildren();
   if (erroNuvem) ul.append(h("li", { className: "aviso" }, erroNuvem));
-  if (!db.camps.length) ul.append(h("li", { className: "vazio" }, podeEditar() ? "Nenhum campeonato ainda. Crie o primeiro acima." : "Nenhum campeonato ainda."));
-  db.camps.forEach(c => ul.append(h("li", { className: c.id === sel ? "ativo" : "" },
+  const fins = db.camps.filter(c => c.status === "finalizado").length;
+  if (fins) ul.append(h("li", {}, h("label", {},
+    h("input", { type: "checkbox", checked: mostrarFim, onchange: e => { mostrarFim = e.target.checked; render(); } }),
+    " Mostrar finalizados (" + fins + ")")));
+  const vis = db.camps.filter(c => mostrarFim || c.status !== "finalizado");
+  if (!vis.length) ul.append(h("li", { className: "vazio" }, !db.camps.length
+    ? (podeEditar() ? "Nenhum campeonato ainda. Crie o primeiro acima." : "Nenhum campeonato ainda.")
+    : "Todos os campeonatos estão finalizados."));
+  vis.forEach(c => ul.append(h("li", { className: c.id === sel ? "ativo" : "" },
     h("span", {}, h("strong", {}, c.nome), " (" + (c.formato === "liga" ? "pontos corridos" : "eliminatório") + (c.status === "finalizado" ? ", finalizado" : "") + ")"),
     h("span", { className: "acoes" },
       h("button", { onclick: () => { sel = c.id; render(); } }, "Abrir"),
